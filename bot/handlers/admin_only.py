@@ -4,10 +4,10 @@ from telegram.ext import ContextTypes
 from bot.config import ADMIN_TELEGRAM_ID
 
 ADMIN_COMMANDS = [
-    "/setbalance <user_id> <amount> — Set a user's balance",
-    "/getbalance <user_id> — Get a user's balance",
-    "/addbalance <user_id> <amount> — Add to a user's balance",
-    "/subbalance <user_id> <amount> — Subtract from a user's balance",
+    "/setbalance &lt;user_id&gt; &lt;amount&gt; — Set a user's balance",
+    "/getbalance &lt;user_id&gt; — Get a user's balance",
+    "/addbalance &lt;user_id&gt; &lt;amount&gt; — Add to a user's balance",
+    "/subbalance &lt;user_id&gt; &lt;amount&gt; — Subtract from a user's balance",
     "/mybalance — Show the admin's own balance"
 ]
 
