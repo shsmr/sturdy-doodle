@@ -1,4 +1,5 @@
 
+
 import asyncio
 import logging
 import os
@@ -16,6 +17,8 @@ from bot.handlers.withdraw import withdraw
 from bot.handlers.dicegame import dicegame
 from bot.handlers.dice import dice
 from bot.handlers.deposit import deposit
+from bot.handlers.admin_only import admin_only
+from bot.handlers import admin_balance
 
 # Load environment variables
 load_dotenv()
@@ -54,6 +57,13 @@ async def main():
     app.add_handler(CommandHandler("dicegame", dicegame))
     app.add_handler(CommandHandler("dice", dice))
     app.add_handler(CommandHandler("deposit", deposit))
+    app.add_handler(CommandHandler("admin_only", admin_only))
+    # Admin-only balance management commands
+    app.add_handler(CommandHandler("setbalance", admin_balance.setbalance))
+    app.add_handler(CommandHandler("getbalance", admin_balance.getbalance))
+    app.add_handler(CommandHandler("addbalance", admin_balance.addbalance))
+    app.add_handler(CommandHandler("subbalance", admin_balance.subbalance))
+    app.add_handler(CommandHandler("mybalance", admin_balance.mybalance))
 
     logger.info("Bot started. Ready to accept commands.")
     app.run_polling()
