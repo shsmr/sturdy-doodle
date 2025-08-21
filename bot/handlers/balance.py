@@ -5,6 +5,8 @@ from bot.db.supabase import get_user
 from bot.payments.oxapay import create_static_address, create_invoice
 
 async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.effective_user or not update.message:
+        return
     tg_id = update.effective_user.id
     user_resp = get_user(tg_id)
     if not user_resp.data or len(user_resp.data) == 0:

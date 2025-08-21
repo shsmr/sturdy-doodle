@@ -1,5 +1,4 @@
-from bot.handlers.dice import dice
-    app.add_handler(CommandHandler("dice", dice))
+
 import asyncio
 import logging
 import os
@@ -13,8 +12,9 @@ from bot.handlers.help import help_command
 from bot.handlers.games import games
 from bot.handlers.bet import bet
 from bot.handlers.referral import referral
-
+from bot.handlers.withdraw import withdraw
 from bot.handlers.dicegame import dicegame
+from bot.handlers.dice import dice
 
 # Load environment variables
 load_dotenv()
@@ -48,11 +48,13 @@ async def main():
     app.add_handler(CommandHandler("games", games))
     app.add_handler(CommandHandler("bet", bet))
     app.add_handler(CommandHandler("referral", referral))
+
     app.add_handler(CommandHandler("withdraw", withdraw))
     app.add_handler(CommandHandler("dicegame", dicegame))
+    app.add_handler(CommandHandler("dice", dice))
 
     logger.info("Bot started. Ready to accept commands.")
-    await app.run_polling()
+    app.run_polling()
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -2,6 +2,8 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 async def dice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.effective_user or not update.message:
+        return
     msg = (
         "🎲 <b>Play Dice</b>\n\n"
         "To play, type the command <code>/dice</code> with the desired bet.\n\n"

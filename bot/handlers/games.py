@@ -11,5 +11,7 @@ GAMES = [
 ]
 
 async def games(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.effective_user or not update.message:
+        return
     msg = "Available games:\n" + "\n".join([f"{emoji} — {cmd}" for cmd, emoji in GAMES])
     await update.message.reply_text(msg)

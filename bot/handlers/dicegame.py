@@ -6,6 +6,8 @@ import random
 # In production, you would store sessions in DB and handle concurrency
 
 async def dicegame(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.effective_user or not update.message:
+        return
     user = update.effective_user
     player_name = user.first_name or user.username or "Player"
     bot_name = "Bot"

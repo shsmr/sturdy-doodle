@@ -4,6 +4,8 @@ from bot.db.supabase import get_user, supabase
 import datetime
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.effective_user or not update.message:
+        return
     tg_id = update.effective_user.id
     username = update.effective_user.username or ""
     # Check if user exists

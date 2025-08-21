@@ -2,6 +2,8 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.effective_user or not update.message:
+        return
     await update.message.reply_text("""
 Available commands:
 /start - Register and get started
