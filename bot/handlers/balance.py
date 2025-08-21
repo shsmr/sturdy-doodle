@@ -43,17 +43,20 @@ async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     # Format balance in USD and crypto (for demo, just USDT)
-    bal_usd = f"${bal:.2f}"
-    bal_crypto = f"({bal:.5f} USDT)" if bal else ""
+    bal_usd = f"${bal:,.2f}"
+    bal_crypto = f"({bal:,.5f} USDT)" if bal else ""
 
 
     # Inline buttons
-    keyboard = []
-    row = [
-        InlineKeyboardButton("💳 Deposit", callback_data="deposit"),
-        InlineKeyboardButton("🏧 Withdraw", callback_data="withdraw")
+    keyboard = [
+        [
+            InlineKeyboardButton("💳 Deposit", callback_data="deposit"),
+            InlineKeyboardButton("🏧 Withdraw", callback_data="withdraw")
+        ],
+        [
+            InlineKeyboardButton("🎲 Play Dice", callback_data="play_dice")
+        ]
     ]
-    keyboard.append(row)
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Styled message

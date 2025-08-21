@@ -40,24 +40,25 @@ async def dice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     arg = context.args[0].lower()
+
     if arg == "all":
-        bet_amount = balance
+        bet_amount = round(balance, 2)
     elif arg == "half":
-        bet_amount = balance / 2
+        bet_amount = round(balance / 2, 2)
     else:
         try:
-            bet_amount = float(arg)
+            bet_amount = round(float(arg), 2)
         except Exception:
             await update.message.reply_text("❌ Invalid bet amount. Usage: /dice 10 or /dice half or /dice all")
             return
 
-    bet_amount = round(bet_amount, 2)
-    if bet_amount <= 0 or bet_amount > balance:
+    # Allow betting full balance, accounting for floating point error
+    if bet_amount <= 0 or bet_amount > balance + 0.01:
         await update.message.reply_text(f"❌ Invalid bet. Your balance: ${balance:.2f}")
         return
 
-    # Deduct bet immediately
-    new_balance = balance - bet_amount
+    # Deduct bet immediately, clamp to zero to avoid negative balances
+    new_balance = max(0, round(balance - bet_amount, 2))
     supabase.table("users").update({"balance": new_balance}).eq("telegram_id", tg_id).execute()
 
     # Bot sends dice emoji
@@ -76,8 +77,8 @@ async def dice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     }
 
     await update.message.reply_text(
-        f"You bet: <b>${bet_amount:.2f}</b>\n"
-        f"Old balance: <b>${balance:.2f}</b>\n"
+        f"You bet: <b>${bet_amount:,.2f}</b>\n"
+        f"Old balance: <b>${balance:,.2f}</b>\n"
         "Now reply with your own 🎲 dice emoji (use the dice button below).",
         parse_mode="HTML"
     )
@@ -105,34 +106,37 @@ async def dice_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Determine win/loss
     if user_value > bot_value:
-        payout = bet_amount * 2 * (1 - HOUSE_EDGE)
-        new_balance = balance + payout
+        total_returned = bet_amount * 2 * (1 - HOUSE_EDGE)
+        net_profit = total_returned - bet_amount
+        new_balance = balance + total_returned
+        payout = total_returned
         result_msg = (
             f"🎲 <b>Dice Game</b>\n\n"
             f"You: <b>{user_value}</b>\nBot: <b>{bot_value}</b>\n\n"
             f"🏆 <b>You win!</b>\n"
-            f"Bet: <b>${bet_amount:.2f}</b>\n"
-            f"Payout (after 2% house edge): <b>${payout:.2f}</b>\n"
-            f"Old balance: <b>${old_balance:.2f}</b>\nNew balance: <b>${new_balance:.2f}</b>"
+            f"Bet: <b>${bet_amount:,.2f}</b>\n"
+            f"Total returned: <b>${total_returned:,.2f}</b>\n"
+            f"Net profit (after 2% house edge): <b>${net_profit:,.2f}</b>\n"
+            f"Old balance: <b>${old_balance:,.2f}</b>\nNew balance: <b>${new_balance:,.2f}</b>"
         )
-    elif user_value < bot_value:
-        payout = 0
-        new_balance = balance
-        result_msg = (
-            f"🎲 <b>Dice Game</b>\n\n"
-            f"You: <b>{user_value}</b>\nBot: <b>{bot_value}</b>\n\n"
-            f"😢 <b>You lose!</b>\n"
-            f"Bet lost: <b>${bet_amount:.2f}</b>\n"
-            f"Old balance: <b>${old_balance:.2f}</b>\nNew balance: <b>${new_balance:.2f}</b>"
-        )
-    else:
+    elif user_value == bot_value:
         payout = bet_amount
         new_balance = balance + bet_amount
         result_msg = (
             f"🎲 <b>Dice Game</b>\n\n"
             f"You: <b>{user_value}</b>\nBot: <b>{bot_value}</b>\n\n"
             f"🤝 <b>Draw!</b>\nYour bet is returned.\n"
-            f"Old balance: <b>${old_balance:.2f}</b>\nNew balance: <b>${old_balance:.2f}</b>"
+            f"Old balance: <b>${old_balance:,.2f}</b>\nNew balance: <b>${old_balance:,.2f}</b>"
+        )
+    else:
+        payout = 0
+        new_balance = balance
+        result_msg = (
+            f"🎲 <b>Dice Game</b>\n\n"
+            f"You: <b>{user_value}</b>\nBot: <b>{bot_value}</b>\n\n"
+            f"❌ <b>You lose!</b>\n"
+            f"Bet: <b>${bet_amount:,.2f}</b>\n"
+            f"Old balance: <b>${old_balance:,.2f}</b>\nNew balance: <b>${new_balance:,.2f}</b>"
         )
 
     # Update balance in DB
@@ -146,4 +150,15 @@ async def dice_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "payout": payout
     }).execute()
 
-    await update.message.reply_text(result_msg, parse_mode="HTML")
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+    keyboard = [
+        [
+            InlineKeyboardButton("🎲 Play Again", callback_data="play_dice"),
+            InlineKeyboardButton("💰 Check Balance", callback_data="show_balance")
+        ],
+        [
+            InlineKeyboardButton("💳 Deposit", callback_data="deposit")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(result_msg, parse_mode="HTML", reply_markup=reply_markup)

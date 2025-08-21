@@ -18,7 +18,7 @@ async def setbalance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         amount = float(amount)
         supabase.table("users").update({"balance": amount}).eq("telegram_id", int(user_id)).execute()
-        await update.message.reply_text(f"✅ Set user {user_id} balance to ${amount:.2f}")
+        await update.message.reply_text(f"✅ Set user {user_id} balance to ${amount:,.2f}")
     except Exception as e:
         await update.message.reply_text(f"❌ Error: {e}")
 
@@ -36,7 +36,7 @@ async def getbalance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         resp = supabase.table("users").select("balance").eq("telegram_id", int(user_id)).execute()
         if resp.data:
             bal = resp.data[0]["balance"]
-            await update.message.reply_text(f"User {user_id} balance: ${bal:.2f}")
+            await update.message.reply_text(f"User {user_id} balance: ${bal:,.2f}")
         else:
             await update.message.reply_text("User not found.")
     except Exception as e:
@@ -59,7 +59,7 @@ async def addbalance(update: Update, context: ContextTypes.DEFAULT_TYPE):
             bal = resp.data[0]["balance"]
             new_bal = bal + amount
             supabase.table("users").update({"balance": new_bal}).eq("telegram_id", int(user_id)).execute()
-            await update.message.reply_text(f"✅ Added ${amount:.2f} to user {user_id}. New balance: ${new_bal:.2f}")
+            await update.message.reply_text(f"✅ Added ${amount:,.2f} to user {user_id}. New balance: ${new_bal:,.2f}")
         else:
             await update.message.reply_text("User not found.")
     except Exception as e:
@@ -82,7 +82,7 @@ async def subbalance(update: Update, context: ContextTypes.DEFAULT_TYPE):
             bal = resp.data[0]["balance"]
             new_bal = bal - amount
             supabase.table("users").update({"balance": new_bal}).eq("telegram_id", int(user_id)).execute()
-            await update.message.reply_text(f"✅ Subtracted ${amount:.2f} from user {user_id}. New balance: ${new_bal:.2f}")
+            await update.message.reply_text(f"✅ Subtracted ${amount:,.2f} from user {user_id}. New balance: ${new_bal:,.2f}")
         else:
             await update.message.reply_text("User not found.")
     except Exception as e:
@@ -98,7 +98,7 @@ async def mybalance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         resp = supabase.table("users").select("balance").eq("telegram_id", int(admin_id)).execute()
         if resp.data:
             bal = resp.data[0]["balance"]
-            await update.message.reply_text(f"Your (admin) balance: ${bal:.2f}")
+            await update.message.reply_text(f"Your (admin) balance: ${bal:,.2f}")
         else:
             await update.message.reply_text("Admin user not found in DB.")
     except Exception as e:

@@ -30,6 +30,7 @@ async def main():
     logger.info("Starting VegasRushBot...")
     app = Application.builder().token(BOT_TOKEN).build()
 
+
     # Register command handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("balance", balance.balance))
@@ -54,6 +55,52 @@ async def main():
     app.add_handler(CommandHandler("addbalance", admin_balance.addbalance))
     app.add_handler(CommandHandler("subbalance", admin_balance.subbalance))
     app.add_handler(CommandHandler("mybalance", admin_balance.mybalance))
+
+    # Navigation callback handler
+    async def nav_callback(update, context):
+        query = update.callback_query
+        if not query:
+            return
+        data = query.data
+        if data == "show_balance":
+            await balance.balance(update, context)
+            await query.answer()
+        elif data == "play_dice":
+            # Show dice instructions as in /dice with no args
+            from telegram import Update as TgUpdate
+            # Create a fake Update with .effective_user and .message for dice()
+            class DummyMsg:
+                def __init__(self, user):
+                    self.from_user = user
+                    self.text = "/dice"
+                    self.message_id = 0
+            dummy_update = update
+            dummy_update.message = DummyMsg(query.from_user)
+            await dice.dice(dummy_update, context)
+            await query.answer()
+        elif data == "deposit":
+            # Always show OxaPay as a button
+            from bot.payments.oxapay import create_invoice
+            user_id = query.from_user.id
+            invoice_link = await create_invoice(user_id, amount=0)
+            if invoice_link and invoice_link.startswith("http"):
+                from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+                keyboard = [[InlineKeyboardButton("💳 Pay with OxaPay", url=invoice_link)]]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                await query.message.reply_text(
+                    "<b>Deposit</b>\n\nClick the button below to deposit via OxaPay. After payment, your balance will be updated automatically.",
+                    parse_mode="HTML",
+                    reply_markup=reply_markup
+                )
+            else:
+                await query.message.reply_text("⚠️ Deposit link unavailable. Please try again later.")
+            await query.answer()
+        elif data == "help":
+            await help_command(update, context)
+            await query.answer()
+        else:
+            await query.answer()
+    app.add_handler(CallbackQueryHandler(nav_callback, pattern="^(show_balance|play_dice|deposit|help)$"))
 
     logger.info("Bot started. Ready to accept commands.")
     app.run_polling()
