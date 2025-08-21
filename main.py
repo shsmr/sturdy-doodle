@@ -2,8 +2,9 @@
 
 import asyncio
 import logging
-import os
-from dotenv import load_dotenv
+from bot.config import (
+    BOT_TOKEN, SUPABASE_URL, SUPABASE_KEY, OXAPAY_API_KEY, OXAPAY_WEBHOOK_SECRET, ADMIN_TELEGRAM_ID
+)
 from telegram.ext import Application, CommandHandler
 
 # Handlers
@@ -20,22 +21,6 @@ from bot.handlers.deposit import deposit
 from bot.handlers.admin_only import admin_only
 from bot.handlers import admin_balance
 
-# Load environment variables
-load_dotenv()
-
-
-def get_env(name: str) -> str:
-    value = os.getenv(name)
-    if value is None or value.strip() == "":
-        raise RuntimeError(f"Missing required environment variable: {name}")
-    return value
-
-BOT_TOKEN = get_env("BOT_TOKEN")
-SUPABASE_URL = get_env("SUPABASE_URL")
-SUPABASE_KEY = get_env("SUPABASE_KEY")
-OXAPAY_API_KEY = get_env("OXAPAY_API_KEY")
-OXAPAY_WEBHOOK_SECRET = os.getenv("OXAPAY_WEBHOOK_SECRET")  # Optional
-ADMIN_TELEGRAM_ID = get_env("ADMIN_TELEGRAM_ID")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("vegasrushbot")

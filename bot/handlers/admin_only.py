@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from main import ADMIN_TELEGRAM_ID
+from bot.config import ADMIN_TELEGRAM_ID
 
 ADMIN_COMMANDS = [
     "/setbalance <user_id> <amount> — Set a user's balance",
