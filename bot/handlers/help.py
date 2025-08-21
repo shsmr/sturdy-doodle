@@ -8,6 +8,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 Available commands:
 /start - Register and get started
 /balance - Show your balance
+/deposit - Deposit crypto with OxaPay
 /bet - Place a bet
 /games - Show available games
 /referral - Get your referral link

@@ -15,6 +15,7 @@ from bot.handlers.referral import referral
 from bot.handlers.withdraw import withdraw
 from bot.handlers.dicegame import dicegame
 from bot.handlers.dice import dice
+from bot.handlers.deposit import deposit
 
 # Load environment variables
 load_dotenv()
@@ -52,9 +53,22 @@ async def main():
     app.add_handler(CommandHandler("withdraw", withdraw))
     app.add_handler(CommandHandler("dicegame", dicegame))
     app.add_handler(CommandHandler("dice", dice))
+    app.add_handler(CommandHandler("deposit", deposit))
 
     logger.info("Bot started. Ready to accept commands.")
     app.run_polling()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    import sys
+    try:
+        if sys.platform.startswith("win") or sys.platform == "darwin":
+            asyncio.run(main())
+        else:
+            import nest_asyncio
+            nest_asyncio.apply()
+            asyncio.get_event_loop().run_until_complete(main())
+    except RuntimeError as e:
+        # fallback for environments where event loop is already running
+        import nest_asyncio
+        nest_asyncio.apply()
+        asyncio.get_event_loop().run_until_complete(main())

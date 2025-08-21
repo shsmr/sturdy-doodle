@@ -22,12 +22,15 @@ async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bal_crypto = f"({bal:.5f} USDT)" if bal else ""
 
     # Inline buttons
-    keyboard = [
-        [
-            InlineKeyboardButton("💳 Deposit", url=invoice_link),
-            InlineKeyboardButton("🏧 Withdraw", callback_data="withdraw")
-        ]
-    ]
+    keyboard = []
+    row = []
+    if invoice_link and invoice_link.startswith("http"):
+        row.append(InlineKeyboardButton("💳 Deposit", url=invoice_link))
+    else:
+        # If OxaPay failed, show a warning instead of a button
+        bal_crypto += "\n⚠️ Deposit link unavailable. Please try again later."
+    row.append(InlineKeyboardButton("🏧 Withdraw", callback_data="withdraw"))
+    keyboard.append(row)
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Styled message
