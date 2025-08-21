@@ -9,14 +9,14 @@ from telegram.ext import Application, CommandHandler
 
 # Handlers
 from bot.handlers.start import start
-from bot.handlers.balance import balance
+from bot.handlers import balance
 from bot.handlers.help import help_command
 from bot.handlers.games import games
 from bot.handlers.bet import bet
 from bot.handlers.referral import referral
 from bot.handlers.withdraw import withdraw
 from bot.handlers.dicegame import dicegame
-from bot.handlers.dice import dice
+from bot.handlers import dice
 from bot.handlers.deposit import deposit
 from bot.handlers.admin_only import admin_only
 from bot.handlers import admin_balance
@@ -32,7 +32,9 @@ async def main():
 
     # Register command handlers
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("balance", balance))
+    app.add_handler(CommandHandler("balance", balance.balance))
+    from telegram.ext import CallbackQueryHandler
+    app.add_handler(CallbackQueryHandler(balance.deposit_callback, pattern="^deposit$"))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("games", games))
     app.add_handler(CommandHandler("bet", bet))
@@ -40,7 +42,10 @@ async def main():
 
     app.add_handler(CommandHandler("withdraw", withdraw))
     app.add_handler(CommandHandler("dicegame", dicegame))
-    app.add_handler(CommandHandler("dice", dice))
+    app.add_handler(CommandHandler("dice", dice.dice))
+    # Handle user dice emoji replies
+    from telegram.ext import MessageHandler, filters
+    app.add_handler(MessageHandler(filters.Dice.ALL, dice.dice_reply))
     app.add_handler(CommandHandler("deposit", deposit))
     app.add_handler(CommandHandler("admin_only", admin_only))
     # Admin-only balance management commands
