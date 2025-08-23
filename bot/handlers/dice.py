@@ -8,38 +8,44 @@ HOUSE_EDGE = 0.02
 # In-memory store for pending dice games: {user_id: {"bet": float, "bot_value": int, "msg_id": int}}
 pending_dice_games = {}
 
-async def dice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.effective_user or not update.message:
+async def dice(update: Update, context: ContextTypes.DEFAULT_TYPE, message=None, args=None):
+    msg_obj = message if message is not None else getattr(update, 'message', None)
+    args_val = args if args is not None else getattr(context, 'args', None)
+    if not update.effective_user or not msg_obj:
         return
 
     tg_id = update.effective_user.id
     # Always fetch latest balance from DB
     user_resp = get_user(tg_id)
-    if not user_resp.data or len(user_resp.data) == 0:
-        await update.message.reply_text("You are not registered. Use /start first.")
-        return
+        if not user_resp.data or len(user_resp.data) == 0:
+            if return_text:
+                return "You are not registered. Use /start first."
+            await msg_obj.reply_text("You are not registered. Use /start first.")
+            return
     user = user_resp.data[0]
     # Fetch balance again to avoid stale value
     balance = float(user.get("balance", 0))
 
     # Parse bet amount
-    if not context.args:
-        await update.message.reply_text(
-            "🎲 <b>Play Dice (Emoji Game)</b>\n\n"
-            "To play, type the command <code>/dice</code> with the desired bet.\n\n"
-            "Examples:\n"
-            "/dice 5.50 - to play for $5.50\n"
-            "/dice half - to play for half of your balance\n"
-            "/dice all - to play all-in\n\n"
-            "How to play:\n"
-            "1. Bot rolls the dice emoji.\n"
-            "2. You reply with your own 🎲 emoji (use the dice button).\n"
-            "3. Higher roll wins!",
-            parse_mode="HTML"
-        )
-        return
+    if not args_val:
+            msg = (
+                "🎲 <b>Play Dice (Emoji Game)</b>\n\n"
+                "To play, type the command <code>/dice</code> with the desired bet.\n\n"
+                "Examples:\n"
+                "/dice 5.50 - to play for $5.50\n"
+                "/dice half - to play for half of your balance\n"
+                "/dice all - to play all-in\n\n"
+                "How to play:\n"
+                "1. Bot rolls the dice emoji.\n"
+                "2. You reply with your own 🎲 emoji (use the dice button).\n"
+                "3. Higher roll wins!"
+            )
+            if return_text:
+                return msg
+            await msg_obj.reply_text(msg, parse_mode="HTML")
+            return
 
-    arg = context.args[0].lower()
+    arg = args_val[0].lower()
 
     if arg == "all":
         bet_amount = round(balance, 2)
@@ -49,12 +55,12 @@ async def dice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             bet_amount = round(float(arg), 2)
         except Exception:
-            await update.message.reply_text("❌ Invalid bet amount. Usage: /dice 10 or /dice half or /dice all")
+            await msg_obj.reply_text("❌ Invalid bet amount. Usage: /dice 10 or /dice half or /dice all")
             return
 
     # Allow betting full balance, accounting for floating point error
     if bet_amount <= 0 or bet_amount > balance + 0.01:
-        await update.message.reply_text(f"❌ Invalid bet. Your balance: ${balance:.2f}")
+        await msg_obj.reply_text(f"❌ Invalid bet. Your balance: ${balance:.2f}")
         return
 
     # Deduct bet immediately, clamp to zero to avoid negative balances
@@ -62,10 +68,10 @@ async def dice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     supabase.table("users").update({"balance": new_balance}).eq("telegram_id", tg_id).execute()
 
     # Bot sends dice emoji
-    dice_msg: Message = await update.message.reply_dice(emoji="🎲")
+    dice_msg: Message = await msg_obj.reply_dice(emoji="🎲")
     bot_value = dice_msg.dice.value if dice_msg.dice else None
     if not bot_value:
-        await update.message.reply_text("❌ Failed to roll dice. Try again.")
+        await msg_obj.reply_text("❌ Failed to roll dice. Try again.")
         return
 
     # Store pending game
@@ -76,7 +82,7 @@ async def dice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "old_balance": balance
     }
 
-    await update.message.reply_text(
+    await msg_obj.reply_text(
         f"You bet: <b>${bet_amount:,.2f}</b>\n"
         f"Old balance: <b>${balance:,.2f}</b>\n"
         "Now reply with your own 🎲 dice emoji (use the dice button below).",

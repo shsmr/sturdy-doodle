@@ -22,14 +22,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    if user_resp.data and len(user_resp.data) > 0:
-        await update.message.reply_text(
-            "🎰 <b>Welcome back to VegasRushBot!</b>\n\n"
-            "<b>What would you like to do next?</b>",
-            parse_mode="HTML",
-            reply_markup=reply_markup
-        )
-        return
+        welcome_text = "🎰 <b>Welcome back to VegasRushBot!</b>\n\n<b>What would you like to do next?</b>"
+        new_user_text = "🎰 <b>Welcome to VegasRushBot!</b>\n\nYour account is created.\n\n<b>What would you like to do next?</b>"
+        if user_resp and user_resp.data and len(user_resp.data) > 0:
+            if edit_message:
+                await edit_message.edit_message_text(welcome_text, parse_mode="HTML", reply_markup=reply_markup)
+            elif update.message:
+                await update.message.reply_text(welcome_text, parse_mode="HTML", reply_markup=reply_markup)
+            return
     # Register new user
     now = datetime.datetime.utcnow().isoformat()
     supabase.table("users").insert({
@@ -37,9 +37,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "username": username,
         "created_at": now
     }).execute()
-    await update.message.reply_text(
-        "🎰 <b>Welcome to VegasRushBot!</b>\n\n"
-        "Your account is created.\n\n<b>What would you like to do next?</b>",
-        parse_mode="HTML",
-        reply_markup=reply_markup
-    )
+        if edit_message:
+            await edit_message.edit_message_text(new_user_text, parse_mode="HTML", reply_markup=reply_markup)
+        elif update.message:
+            await update.message.reply_text(new_user_text, parse_mode="HTML", reply_markup=reply_markup)

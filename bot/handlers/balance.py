@@ -30,22 +30,23 @@ from telegram.ext import ContextTypes
 from bot.db.supabase import get_user
 from bot.payments.oxapay import create_static_address, create_invoice
 
-async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.effective_user or not update.message:
+async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE, message=None):
+    msg_obj = message if message is not None else getattr(update, 'message', None)
+    if not update.effective_user or not msg_obj:
         return
     tg_id = update.effective_user.id
     user_resp = get_user(tg_id)
-    if not user_resp.data or len(user_resp.data) == 0:
-        await update.message.reply_text("You are not registered. Use /start first.")
-        return
+        if not user_resp.data or len(user_resp.data) == 0:
+            if return_text:
+                return "You are not registered. Use /start first."
+            await msg_obj.reply_text("You are not registered. Use /start first.")
+            return
     user = user_resp.data[0]
     bal = user.get("balance", 0)
-
 
     # Format balance in USD and crypto (for demo, just USDT)
     bal_usd = f"${bal:,.2f}"
     bal_crypto = f"({bal:,.5f} USDT)" if bal else ""
-
 
     # Inline buttons
     keyboard = [
@@ -64,8 +65,10 @@ async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"<code>/balance</code>\n"
         f"Your balance: <b>{bal_usd}</b> {bal_crypto}"
     )
-    await update.message.reply_text(
-        msg,
-        parse_mode="HTML",
-        reply_markup=reply_markup
-    )
+        if return_text:
+            return msg
+        await msg_obj.reply_text(
+            msg,
+            parse_mode="HTML",
+            reply_markup=reply_markup
+        )
